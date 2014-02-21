@@ -5,6 +5,7 @@ gc-ota es un script creado por un conjunto de funciones con contról de argument
 
 
 Se incluye un archivo build.prop a modo de ejemplo.
+
 Explicación de los valores en build.prop:
 
 gingercerecilla.version=0.8
