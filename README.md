@@ -33,3 +33,4 @@ URL       -> Link de descarga del archivo update.zip
 Cambios   -> Cambios realizados en el update (sin espacios) ejemplo: "Última_actualización_que_proporciona_soporte_OTA"
 
 Nota: El archivo "updates" es el más importante de todos ya que contiene información importante y sensible para acceder a las actualizaciones, así que debe estar en un sitio seguro y controlado solo por el desarrollador de la ROM
+
