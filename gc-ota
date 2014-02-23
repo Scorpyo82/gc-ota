@@ -44,17 +44,49 @@
 
 
 #VARIABLES
-VERSION="1.0"
-LOG="/system/gc-ota_$VERSION.log"	#Log del script
-KEY_RECOVERY_OLD="/cache/recovery/load-recovery-old"	#Archivo clave a ser interpretado por el inicio de recovery selectivo
-PATH_HOME="/sdcard/GC-OTA/"		#Ruta raiz para los trabajos de la aplicación
-PATH_REPO_DOWNLOAD="/sdcard/GC-OTA/repo/"	#Ruta donde se descargará la lista de actualizaciones
-PATH_FILES_DOWNLOAD="/sdcard/GC-OTA/files"	#Ruta donde se descargarán los achivos de actualizaciones
-VERSION_GINGER=$(getprop gingercerecilla.version)	#Valor de la versión de la ROM actual 
-UPDATE_ACTUAL=$(getprop gingercerecilla.update)		#Valor del último update instalado o número de actualización realizada
-URL_REPO=$(getprop gingercerecilla.url.repo)		#Dirección hasta el repositorio en el que se descargará la información OTA
 
-# Variable para el archivo de bloqueo
+# Esta variable define la versión del Script actual:
+VERSION="1.0"
+
+# Variable que define el archivo en el que se debe de escribir los datos recogidos del repositorio.
+PATH_XML="/data/data/es.pccitos.gcsettings/shared_prefs/OtaInfo.xml"
+
+# Ruta en la que se encuentra actualmente este Script.
+PATH_GCOTA="/system/xbin/gc-ota"
+
+# Nombre del archivo que se escribirá en init.d para activar CRON con las búsquedas programadas.
+PATH_FILE_INIT_D="/system/etc/init.d/08gc-ota"
+
+# Esta variable define el lugar donde se almacena el log generado, tenga en cuenta de que el script está preparado para escribir
+# en la partición /system si usté quiere generar el log en algún otro lugar deve de asegurarse de tener permisos de escritura.
+LOG="/system/gc-ota_$VERSION.log"
+
+# Variable que recoge el nombre en clave que debe tener el archivo que hace reaccionar al recovery selectivo para usar el
+# Recovery viejo en lugar del nuevo, si ustéd está usando un kernel que no tenga esta opción pero que sea compatible con 
+# los archivos "command" para autoinstalar los zip no deve de preocuparse en cambiar esta opción.
+KEY_RECOVERY_OLD="/cache/recovery/load-recovery-old"
+
+# Ruta raiz para los trabajos de la aplicación
+PATH_HOME="/sdcard/GC-OTA/"
+
+# Ruta donde se descargará la lista de actualizaciones
+PATH_REPO_DOWNLOAD="/sdcard/GC-OTA/repo/"
+
+# Ruta donde se descargarán los achivos de actualizaciones
+PATH_FILES_DOWNLOAD="/sdcard/GC-OTA/files"
+
+# Esta variable recogera de su build.prop el valor de la versión de la ROM actual 
+VERSION_GINGER=$(getprop gingercerecilla.version)
+
+# Esta variable recogera de su build.prop el valor del último update instalado o número de actualización realizada
+UPDATE_ACTUAL=$(getprop gingercerecilla.update)
+
+# Esta variable recogera de su build.prop el valor de la dirección hasta el repositorio en el que se descargará la información OTA
+URL_REPO=$(getprop gingercerecilla.url.repo)
+
+# Variable para el archivo de bloqueo que impedirá que la aplicación se ejecute dos veces al mismo tiempo.
+# El destino elegijo es recomendable no cambiarlo, pues si la aplicación se cuelga, el archivo de bloqueo en este lugar se borrará
+# trás un reinicio, con lo que podrá seguir usando despues de este el Script
 LOCKFILE=/cache/recovery/gc-ota.lock
 
 ## FUNCIONES:
@@ -85,7 +117,8 @@ function CHECK_RUN(){
 
 function VAR_CONTROL(){
 ## Función para controlar que no haya ni una sola variable vacía de las importantes
-	if [ $VERSION_GINGER == "" ] || [ $UPDATE_ACTUAL == "" ] || [ $URL_REPO == "" ]
+
+	if [ -z $VERSION_GINGER ] || [ -z $UPDATE_ACTUAL ] || [ -z $URL_REPO ]
 	then
 		echo "Alguna de las variables en /system/build.prop no están definidas adecuadamente."
 		SALIR
@@ -122,17 +155,33 @@ function CHECK_PATH_SD(){
 	else
 		echo "Directorios en tarjeta SD detectados."
 	fi
+}
 
-
+function CHECK_PATH_XML(){
+## Función que comprueba si existe la ruta hasta llegar donde se deben de copiar los archivos XML.
+	
+	if [ ! -e /data/data/es.pccitos.gcsettings/shared_prefs ]
+	then
+		echo "La ruta para escribir los xml no existe."
+		echo "Esto puede suceder por no tener la app correcta instalada"
+		echo "O por no haberla utilizado nunca"
+		SALIR
+	else
+		echo "Ruta para copiar los archivos XML detectados."
+		echo ""
+	fi
 }
 
 function DOWNLOAD_REPO(){
 ## Función que actualiza el archivo de repositorio con las actualizaciones publicadas en el server
 	CHECK_PATH_SD
 	CHECK_NET
-	rm  $PATH_REPO_DOWNLOAD/updates
-	wget $URL_REPO -P $PATH_REPO_DOWNLOAD
 
+	if [ -e "$PATH_REPO_DOWNLOAD/updates" ]
+	then
+		rm  $PATH_REPO_DOWNLOAD/updates
+	fi
+	wget $URL_REPO -P $PATH_REPO_DOWNLOAD
 }
 
 
@@ -162,7 +211,7 @@ function SEARH_UPDATE(){
 				echo "Cambios:"
 				echo $CAMBIOS
 				break
-				return
+				return 0
 			fi
 
 		echo "No se han encontrado actualizaciones, inténtelo más adelante"
@@ -213,37 +262,103 @@ function PREPARE_REBOOT(){
 
 }
 
+function CHANGES_TO_XML(){
+## Función que genera un informe con los cambios encontrados para que sea leido por la app escogida
+
+	CHECK_PATH_XML #Se llama a esta función para saber si es posible llegar hasta la ruta donde se deben de copiar los XML
+
+	#Fijando el nombre del paquete a instalar:
+	UPDATEZIP="GC_v"$VERSION_GINGER"_Update_"$UPDATE_ON_REPO".zip"
+
+echo "Escribiendo un informe para que sea leido por la app..."
+
+echo "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>" > $PATH_XML
+echo '<map>
+<boolean name="preparado" value="true" />
+<string name="version_rom_actual">'$VERSION_GINGER'</string>
+<string name="update_ota">'$UPDATE_ON_REPO'</string>
+<string name="ota_changes">'$CAMBIOS'</string>
+<string name="update_package">'$UPDATEZIP'</string>
+</map>
+' >> $PATH_XML
+echo "Hecho!"
+
+	# Seteando permisos:
+	PROPIETARIO=$(ls -dl $PATH_XML | awk '{print $3}')
+	chown $PROPIETARIO:$PROPIETARIO $PATH_XML
+	chmod 775 $PATH_XML
+
+}
+
+function HELP(){
+## Función que muestra la ahuda del Script
+
+	echo ""
+	echo "	gc-ota Version $VERSION"
+	echo '
+    Modo de empleo: gc-ota [Opción]
+
+    --app              Ejecuta los trabajos por defecto para usar la app "Ajustes Especiales GC".
+    --check            Busca y muestra la información usando el último repo descargado
+    --update           Actualiza el repositorio, muestra información, pero no actualiza el sistema
+    --upgrade          Actualiza el sistema con la versión superior que esté disponible en el servidor
+    --version          Muestra la versión de gc-settings
+    --help             Muestra esta ayuda
+
+    Desarrollado por <Miguel Ponce Torres> bajo GNU GPL <http://www.gnu.org/licenses/>
+    MAIL: miguelponcetorres@gmail.com
+'
+
+}
+
 ## Gestión de argumentos
 
 CHECK_RUN
-VAR_CONTROL #Siempre comprobar que las variables se han podido leer con exito
+
 
 case $1 in
+
+	--app) #Descarga información del repositorio, comprueba versiones, crea el informe y lanza la app para instalar
+		VAR_CONTROL #Siempre comprobar que las variables se han podido leer con exito
+		SEARCH_UPDATE | tee $LOG
+		DOWNLOAD_REPO | tee -a $LOG
+		CHANGES_TO_XML | tee -a $LOG
+		# Comando para abrir el OtaInfo
+		am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
+	;;
+
 	--check) #Busca información en el último repo descargado
 		echo "Buscando la última información sobre el repositorio actual..."
 		echo ""
+		VAR_CONTROL #Siempre comprobar que las variables se han podido leer con exito
 		SEARH_UPDATE
+
 	;;
 
 	--update) #Actualiza el repositorio, muestra información, pero no actualiza el sistema
+		VAR_CONTROL #Siempre comprobar que las variables se han podido leer con exito
 		DOWNLOAD_REPO
 	;;
 	
 	--upgrade) # Actualiza el sistema con la versión superior encontrada
-		SEARH_UPDATE
+		VAR_CONTROL #Siempre comprobar que las variables se han podido leer con exito
 		DOWNLOAD_REPO
+		SEARH_UPDATE
 		PREPARE_REBOOT
 	;;
 
+	--version)
+		echo "	gc-ota Version $VERSION"
+	;;
+
 	--help)
-		echo "Ayuda aún no implementada"
+		HELP
 	;;
 
 	*)
 		echo "Comando no reconocido"
+		sleep 1
+		HELP
 esac
 
 SALIR
-
-
-
