@@ -207,7 +207,7 @@ function SEARH_UPDATE(){
 				CAMBIOS=$(echo $line | awk '{print $5}' | sed 's/_/ /g')
 	
 				echo "Se ha encontrado una actualización para la versión que está utilizando:"
-				echo "Actualización nº $UPDATE_ON_REPO para la versión $UPDATE_ACTUAL"
+				echo "Actualización nº $UPDATE_ON_REPO para la versión $VERSION_GINGER"
 				echo "Cambios:"
 				echo $CAMBIOS
 				break
@@ -284,9 +284,9 @@ echo '<map>
 echo "Hecho!"
 
 	# Seteando permisos:
-	PROPIETARIO=$(ls -dl $PATH_XML | awk '{print $3}')
+	PROPIETARIO=$(ls -dl /data/data/es.pccitos.gcsettings/shared_prefs | awk '{print $3}')
 	chown $PROPIETARIO:$PROPIETARIO $PATH_XML
-	chmod 775 $PATH_XML
+	chmod 660 $PATH_XML
 
 }
 
