@@ -33,3 +33,19 @@ Cambios   -> Cambios realizados en el update (sin espacios) ejemplo: "Última_ac
 
 Nota: El archivo "updates" es el más importante de todos ya que contiene información importante y sensible para acceder a las actualizaciones, así que debe estar en un sitio seguro y controlado solo por el desarrollador de la ROM
 
+
+
+Ayuda:
+	gc-ota Version 1.0
+
+    Modo de empleo: gc-ota [Opción]
+
+    --app              Ejecuta los trabajos por defecto para usar la app "Ajustes Especiales GC".
+    --check            Busca y muestra la información usando el último repo descargado
+    --update           Actualiza el repositorio, muestra información, pero no actualiza el sistema
+    --upgrade          Actualiza el sistema con la versión superior que esté disponible en el servidor
+    --version          Muestra la versión de gc-settings
+    --help             Muestra esta ayuda
+
+    Desarrollado por <Miguel Ponce Torres> bajo GNU GPL <http://www.gnu.org/licenses/>
+    MAIL: miguelponcetorres@gmail.com
