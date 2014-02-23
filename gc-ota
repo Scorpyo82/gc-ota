@@ -108,6 +108,7 @@ function CHECK_RUN(){
 		touch $LOCKFILE
 	else
 		#Mensaje para comunicar que aún se están ejecutando tareas
+		echo ""
 		echo "El archivo de bloqueo de gc-ota aún exite"
 		echo "¿Está la aplicación en uso?"
 		exit
@@ -120,9 +121,11 @@ function VAR_CONTROL(){
 
 	if [ -z $VERSION_GINGER ] || [ -z $UPDATE_ACTUAL ] || [ -z $URL_REPO ]
 	then
+		echo ""
 		echo "Alguna de las variables en /system/build.prop no están definidas adecuadamente."
 		SALIR
 	else
+		echo ""
 		echo "Datos de versión actual obtenidos con exito"
 		return 0
 	fi
@@ -133,12 +136,16 @@ function CHECK_NET(){
 ## Función que comprueba el acceso a internet.
 
 	echo "Comprobado el acceso al servidor web..."
+	echo "########################################"
 	ping -c 1 www.pc-citos.es
+	echo "########################################"
 	if [ $? == "0" ]
 	then
+		echo ""
 		echo "Disponibilidad del servidor web comprobado y correcto"
 		return 0
 	else
+		echo ""
 		echo "Problema con el acceso al servidor web"
 		SALIR
 	fi
@@ -149,10 +156,12 @@ function CHECK_PATH_SD(){
 	
 	if [ ! -e $PATH_HOME ] || [ ! -e $PATH_FILES_DOWNLOAD ] || [ ! -e $PATH_REPO_DOWNLOAD ]
 	then
+		echo ""
 		echo "Creando direcotrios necesarios en tarjeta SD..."
 		mkdir -p $PATH_HOME $PATH_REPO_DOWNLOAD $PATH_FILES_DOWNLOAD
 		echo "Directorios creados."
 	else
+		echo ""
 		echo "Directorios en tarjeta SD detectados."
 	fi
 }
@@ -162,13 +171,14 @@ function CHECK_PATH_XML(){
 	
 	if [ ! -e /data/data/es.pccitos.gcsettings/shared_prefs ]
 	then
+		echo ""
 		echo "La ruta para escribir los xml no existe."
 		echo "Esto puede suceder por no tener la app correcta instalada"
 		echo "O por no haberla utilizado nunca"
 		SALIR
 	else
-		echo "Ruta para copiar los archivos XML detectados."
 		echo ""
+		echo "Ruta para copiar los archivos XML detectados."
 	fi
 }
 
@@ -179,13 +189,28 @@ function DOWNLOAD_REPO(){
 
 	if [ -e "$PATH_REPO_DOWNLOAD/updates" ]
 	then
+		echo ""
+		echo "Eliminado repositorio antiguo"
 		rm  $PATH_REPO_DOWNLOAD/updates
 	fi
+	echo ""
+	echo "Descargando nuevo repositorio"
+	echo "########################################"
 	wget $URL_REPO -P $PATH_REPO_DOWNLOAD
+	echo "########################################"
+
+	if [ $? != "0" ]
+	then
+		echo ""
+		echo "No ha sido posible descargar el repositorio"
+		echo "Abortando"
+		SALIR
+	fi
+
 }
 
 
-function SEARH_UPDATE(){
+function SEARCH_UPDATE(){
 ## Función que compara las versión actual del sistema, y la actualización corriente para buscar y seleccionar la actualización justo por encima.
 
 	if [ -e $PATH_REPO_DOWNLOAD/updates ]
@@ -194,6 +219,8 @@ function SEARH_UPDATE(){
 		sed '1d' $PATH_REPO_DOWNLOAD/updates | sed '/^$/d' | sed '/./!d' > $PATH_REPO_DOWNLOAD/updates_temp
 
 		# Buscaremos línea a línea
+		echo "" 
+		echo "Buscando actualizaciones..."
 		while read line
 		do
 			# Si en esta línea se encuentra la misma versión en la columna 1 y una actualización un número mayor en la columna 2 entonces
@@ -204,50 +231,73 @@ function SEARH_UPDATE(){
 			then
 				MD5SUM_ZIP_REPO=$(echo $line | awk '{print $3}')
 				LINK_UPDATE=$(echo $line | awk '{print $4}')
-				CAMBIOS=$(echo $line | awk '{print $5}' | sed 's/_/ /g')
-	
+				CHANGES=$(echo $line | awk '{print $5}' | sed 's/_/ /g')
+				
+				echo ""
 				echo "Se ha encontrado una actualización para la versión que está utilizando:"
 				echo "Actualización nº $UPDATE_ON_REPO para la versión $VERSION_GINGER"
 				echo "Cambios:"
-				echo $CAMBIOS
+				echo $CHANGES
 				break
-				return 0
 			fi
 
+		echo ""
 		echo "No se han encontrado actualizaciones, inténtelo más adelante"
+		SALIR
 
 		done < $PATH_REPO_DOWNLOAD/updates_temp
 
 	else
+		echo ""
 		echo "Actualmente no hay ningún fichero de repositorio descargado..."
 		echo "Use [gc-ota --update] para descargarlo desde el servidor web e inténtelo de nuevo"
+		SALIR
 	fi
+
+}
+
+function DOWNLOAD_UPDATEZIP(){
+## Función que descarga el update.zip
+
+	#Fijando el nombre del paquete:
+	UPDATEZIP="GC_v"$VERSION_GINGER"_Update_"$UPDATE_ON_REPO".zip"
+
+	#Descargando paquete
+	echo ""
+	echo "Descargando el $UPDATEZIP desde el origen:"
+	echo "$LINK_UPDATE"
+	echo ""
+	echo "########################################"
+	wget $LINK_UPDATE -O $PATH_FILES_DOWNLOAD/$UPDATEZIP
+	echo "########################################"
+
+	if [ $? != 0 ]
+	then
+		echo ""
+		echo "Ocurrión un error al descargar el archivo..."
+		echo "Abortado"
+		SALIR
+	else
+		echo ""
+		echo "Archivo descargado con exito"
+	fi
+
 }
 
 function PREPARE_REBOOT(){
 ## Función que prepara todo lo necesario para actualizar el sistema con el nuevo update.zip
 
-	#Fijando el nombre del paquete:
-	UPDATEZIP="GC_v"$VERSION_GINGER"_Update_"$UPDATE_ON_REPO".zip"
-	#Descargando paquete
-	wget $LINK_UPDATE -O $PATH_FILES_DOWNLOAD/$UPDATEZIP
-	if [ $? != 0 ]
-	then
-		echo "Ocurrión un error al descargar el archivo..."
-		echo "Abortado"
-		SALIR
-	else
-		echo "Archivo descargado con exito"
-	fi
 	
 	#Obteniendo y comparando md5
 	MD5SUM_ZIP=$(md5sum $PATH_FILES_DOWNLOAD/$UPDATEZIP | awk '{print $1}')
 	if [ $MD5SUM_ZIP != $MD5SUM_ZIP_REPO ]
 	then
+		echo ""
 		echo "La suma de verificación del archivo descargado no coincide con la que se esperaba"
 		echo "¿¿Archivo corrupto??"
-		return 1
+		SALIR
 	else
+		echo ""
 		echo "Suma de verificación exitosa"
 	fi
 	
@@ -270,25 +320,66 @@ function CHANGES_TO_XML(){
 	#Fijando el nombre del paquete a instalar:
 	UPDATEZIP="GC_v"$VERSION_GINGER"_Update_"$UPDATE_ON_REPO".zip"
 
-echo "Escribiendo un informe para que sea leido por la app..."
+echo "Escribiendo el siguiente informe para que sea leido por la app..."
+
+	echo "##########################################################"
+echo "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>"
+echo '<map>
+<boolean name="preparado" value="true" />
+<string name="version_rom_actual">'$VERSION_GINGER'</string>
+<string name="update_ota">'$UPDATE_ON_REPO'</string>
+<string name="ota_changes">'$CHANGES'</string>
+<string name="update_package">'$UPDATEZIP'</string>
+</map>
+'
+	echo "##########################################################"
+
 
 echo "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>" > $PATH_XML
 echo '<map>
 <boolean name="preparado" value="true" />
 <string name="version_rom_actual">'$VERSION_GINGER'</string>
 <string name="update_ota">'$UPDATE_ON_REPO'</string>
-<string name="ota_changes">'$CAMBIOS'</string>
+<string name="ota_changes">'$CHANGES'</string>
 <string name="update_package">'$UPDATEZIP'</string>
 </map>
 ' >> $PATH_XML
-echo "Hecho!"
+
+	echo ""
+	echo "Hecho!"
 
 	# Seteando permisos:
+	echo ""
+	echo "Estableciendo permisos para $PATH_XML"
 	PROPIETARIO=$(ls -dl /data/data/es.pccitos.gcsettings/shared_prefs | awk '{print $3}')
-	chown $PROPIETARIO:$PROPIETARIO $PATH_XML
+	chown $PROPIETARIO $PATH_XML
 	chmod 660 $PATH_XML
 
 }
+
+function READY_XML(){
+## Función que escribe en el xml los valores que interpretará la app para que sepa que se terminó la descarga.
+
+echo "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>" > $PATH_XML
+echo '<map>
+<boolean name="preparado" value="true" />
+<boolean name="reiniciar" value="true" />
+<string name="version_rom_actual">'$VERSION_GINGER'</string>
+<string name="update_ota">'$UPDATE_ON_REPO'</string>
+<string name="ota_changes">'$CHANGES'</string>
+<string name="update_package">'$UPDATEZIP'</string>
+</map>
+' >> $PATH_XML
+
+	# Seteando permisos:
+	echo ""
+	echo "Estableciendo permisos para $PATH_XML"
+	PROPIETARIO=$(ls -dl /data/data/es.pccitos.gcsettings/shared_prefs | awk '{print $3}')
+	chown $PROPIETARIO $PATH_XML
+	chmod 660 $PATH_XML
+
+}
+
 
 function HELP(){
 ## Función que muestra la ahuda del Script
@@ -299,6 +390,7 @@ function HELP(){
     Modo de empleo: gc-ota [Opción]
 
     --app              Ejecuta los trabajos por defecto para usar la app "Ajustes Especiales GC".
+    --app upgrade      Actualiza el sistema con la versión superior que esté disponible y lo muestra en la app
     --check            Busca y muestra la información usando el último repo descargado
     --update           Actualiza el repositorio, muestra información, pero no actualiza el sistema
     --upgrade          Actualiza el sistema con la versión superior que esté disponible en el servidor
@@ -311,6 +403,7 @@ function HELP(){
 
 }
 
+
 ## Gestión de argumentos
 
 CHECK_RUN
@@ -318,20 +411,37 @@ CHECK_RUN
 
 case $1 in
 
-	--app) #Descarga información del repositorio, comprueba versiones, crea el informe y lanza la app para instalar
-		VAR_CONTROL #Siempre comprobar que las variables se han podido leer con exito
-		SEARCH_UPDATE | tee $LOG
-		DOWNLOAD_REPO | tee -a $LOG
-		CHANGES_TO_XML | tee -a $LOG
-		# Comando para abrir el OtaInfo
-		am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
+	--app)
+
+		if [ "$2" == "upgrade" ]
+		then
+			sleep 2
+			VAR_CONTROL #Siempre comprobar que las variables se han podido leer con exito
+			DOWNLOAD_REPO
+			SEARCH_UPDATE			
+			DOWNLOAD_UPDATEZIP
+			PREPARE_REBOOT
+			READY_XML
+
+			# Comando para abrir el OtaInfo
+			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
+		else
+
+			#Descarga información del repositorio, comprueba versiones, crea el informe y lanza la app para instalar
+			VAR_CONTROL #Siempre comprobar que las variables se han podido leer con exito
+			DOWNLOAD_REPO
+			SEARCH_UPDATE
+			CHANGES_TO_XML
+			# Comando para abrir el OtaInfo
+			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
+		fi
 	;;
 
 	--check) #Busca información en el último repo descargado
 		echo "Buscando la última información sobre el repositorio actual..."
 		echo ""
 		VAR_CONTROL #Siempre comprobar que las variables se han podido leer con exito
-		SEARH_UPDATE
+		SEARCH_UPDATE
 
 	;;
 
@@ -343,7 +453,8 @@ case $1 in
 	--upgrade) # Actualiza el sistema con la versión superior encontrada
 		VAR_CONTROL #Siempre comprobar que las variables se han podido leer con exito
 		DOWNLOAD_REPO
-		SEARH_UPDATE
+		SEARCH_UPDATE
+		DOWNLOAD_UPDATEZIP
 		PREPARE_REBOOT
 	;;
 
