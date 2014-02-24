@@ -134,6 +134,7 @@ function VAR_CONTROL(){
 			echo '<string name="motivo_fallo">A su sistema le faltan variables importantes en build.prop</string>' >> $PATH_XML
 			echo "</map>" >> $PATH_XML
 			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
+			SET_PERMISOS_XML
 		fi
 		SALIR
 	else
@@ -141,6 +142,18 @@ function VAR_CONTROL(){
 		echo "Datos de versión actual obtenidos con exito"
 		return 0
 	fi
+}
+
+
+function SET_PERMISOS_XML(){
+# Función que setéa los permisos
+	# Seteando permisos:
+	echo ""
+	echo "Estableciendo permisos para $PATH_XML"
+	PROPIETARIO=$(ls -dl /data/data/es.pccitos.gcsettings/shared_prefs | awk '{print $3}')
+	chown $PROPIETARIO $PATH_XML
+	chmod 660 $PATH_XML
+
 }
 
 
@@ -168,6 +181,7 @@ function CHECK_NET(){
 			echo '<string name="motivo_fallo">Problema con el acceso al servidor web</string>' >> $PATH_XML
 			echo "/<map>" >> $PATH_XML
 			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
+			SET_PERMISOS_XML
 		fi
 		SALIR
 
@@ -235,6 +249,7 @@ function DOWNLOAD_REPO(){
 			echo '<string name="motivo_fallo">No ha sido posible descargar el repositorio</string>' >> $PATH_XML
 			echo "</map>" >> $PATH_XML
 			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
+			SET_PERMISOS_XML
 		fi
 		SALIR
 
@@ -287,6 +302,7 @@ function SEARCH_UPDATE(){
 			echo '<string name="motivo_fallo">No se han encontrado actualizaciones, inténtelo más adelante</string>' >> $PATH_XML
 			echo "</map>" >> $PATH_XML
 			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
+			SET_PERMISOS_XML
 		fi
 		SALIR
 
@@ -306,6 +322,7 @@ function SEARCH_UPDATE(){
 			echo '<string name="motivo_fallo">Actualmente no hay ningún fichero de repositorio descargado...</string>' >> $PATH_XML
 			echo "</map>" >> $PATH_XML
 			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
+			SET_PERMISOS_XML
 		fi
 		SALIR
 
@@ -341,6 +358,7 @@ function DOWNLOAD_UPDATEZIP(){
 			echo '<string name="motivo_fallo">Ocurrión un error al descargar el archivo...</string>' >> $PATH_XML
 			echo "</map>" >> $PATH_XML
 			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
+			SET_PERMISOS_XML
 		fi
 		SALIR
 
@@ -372,6 +390,7 @@ function PREPARE_REBOOT(){
 			echo '<string name="motivo_fallo">La suma de verificación del archivo descargado no coincide con la que se esperaba</string>' >> $PATH_XML
 			echo "</map>" >> $PATH_XML
 			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
+			SET_PERMISOS_XML
 		fi
 		SALIR
 
@@ -431,12 +450,7 @@ echo '<map>
 	echo ""
 	echo "Hecho!"
 
-	# Seteando permisos:
-	echo ""
-	echo "Estableciendo permisos para $PATH_XML"
-	PROPIETARIO=$(ls -dl /data/data/es.pccitos.gcsettings/shared_prefs | awk '{print $3}')
-	chown $PROPIETARIO $PATH_XML
-	chmod 660 $PATH_XML
+	SET_PERMISOS_XML
 
 }
 
@@ -456,12 +470,7 @@ echo '<map>
 </map>
 ' >> $PATH_XML
 
-	# Seteando permisos:
-	echo ""
-	echo "Estableciendo permisos para $PATH_XML"
-	PROPIETARIO=$(ls -dl /data/data/es.pccitos.gcsettings/shared_prefs | awk '{print $3}')
-	chown $PROPIETARIO $PATH_XML
-	chmod 660 $PATH_XML
+	SET_PERMISOS_XML
 
 }
 
@@ -560,5 +569,7 @@ case $1 in
 		sleep 1
 		HELP
 esac
+
+sync
 
 SALIR
