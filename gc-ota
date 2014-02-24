@@ -123,6 +123,18 @@ function VAR_CONTROL(){
 	then
 		echo ""
 		echo "Alguna de las variables en /system/build.prop no están definidas adecuadamente."
+		
+		#Si se llamó a la función con el argumento "APP" se dejará en el xml un registro de error y el motivo del fallo
+		if [ $1 == "APP" ]
+		then
+			echo "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>" > $PATH_XML
+			echo "<map>" >> $PATH_XML
+			echo '<boolean name="preparado" value="true" />' >> PATH_XML
+			echo '<boolean name="fallo" value="true" />' >> $PATH_XML
+			echo '<string name="motivo_fallo">A su sistema le faltan variables importantes en build.prop</string>' >> $PATH_XML
+			echo "</map>" >> $PATH_XML
+			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
+		fi
 		SALIR
 	else
 		echo ""
@@ -135,19 +147,30 @@ function VAR_CONTROL(){
 function CHECK_NET(){
 ## Función que comprueba el acceso a internet.
 
+	echo ""
 	echo "Comprobado el acceso al servidor web..."
-	echo "########################################"
 	ping -c 1 www.pc-citos.es
-	echo "########################################"
 	if [ $? == "0" ]
 	then
 		echo ""
 		echo "Disponibilidad del servidor web comprobado y correcto"
-		return 0
 	else
 		echo ""
 		echo "Problema con el acceso al servidor web"
+		
+		#Si se llamó a la función con el argumento "APP" se dejará en el xml un registro de error y el motivo del fallo
+		if [ $1 == "APP" ]
+		then
+			echo "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>" > $PATH_XML
+			echo "<map>" >> $PATH_XML
+			echo '<boolean name="preparado" value="true" />' >> PATH_XML
+			echo '<boolean name="fallo" value="true" />' >> $PATH_XML
+			echo '<string name="motivo_fallo">Problema con el acceso al servidor web</string>' >> $PATH_XML
+			echo "/<map>" >> $PATH_XML
+			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
+		fi
 		SALIR
+
 	fi
 }
 
@@ -185,7 +208,6 @@ function CHECK_PATH_XML(){
 function DOWNLOAD_REPO(){
 ## Función que actualiza el archivo de repositorio con las actualizaciones publicadas en el server
 	CHECK_PATH_SD
-	CHECK_NET
 
 	if [ -e "$PATH_REPO_DOWNLOAD/updates" ]
 	then
@@ -195,16 +217,27 @@ function DOWNLOAD_REPO(){
 	fi
 	echo ""
 	echo "Descargando nuevo repositorio"
-	echo "########################################"
 	wget $URL_REPO -P $PATH_REPO_DOWNLOAD
-	echo "########################################"
 
 	if [ $? != "0" ]
 	then
 		echo ""
 		echo "No ha sido posible descargar el repositorio"
 		echo "Abortando"
+		
+		#Si se llamó a la función con el argumento "APP" se dejará en el xml un registro de error y el motivo del fallo
+		if [ $1 == "APP" ]
+		then
+			echo "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>" > $PATH_XML
+			echo "<map>" >> $PATH_XML
+			echo '<boolean name="preparado" value="true" />' >> PATH_XML
+			echo '<boolean name="fallo" value="true" />' >> $PATH_XML
+			echo '<string name="motivo_fallo">No ha sido posible descargar el repositorio</string>' >> $PATH_XML
+			echo "</map>" >> $PATH_XML
+			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
+		fi
 		SALIR
+
 	fi
 
 }
@@ -243,6 +276,18 @@ function SEARCH_UPDATE(){
 
 		echo ""
 		echo "No se han encontrado actualizaciones, inténtelo más adelante"
+		
+		#Si se llamó a la función con el argumento "APP" se dejará en el xml un registro de error y el motivo del fallo
+		if [ $1 == "APP" ]
+		then
+			echo "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>" > $PATH_XML
+			echo "<map>" >> $PATH_XML
+			echo '<boolean name="preparado" value="true" />' >> PATH_XML
+			echo '<boolean name="fallo" value="true" />' >> $PATH_XML
+			echo '<string name="motivo_fallo">No se han encontrado actualizaciones, inténtelo más adelante</string>' >> $PATH_XML
+			echo "</map>" >> $PATH_XML
+			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
+		fi
 		SALIR
 
 		done < $PATH_REPO_DOWNLOAD/updates_temp
@@ -251,7 +296,19 @@ function SEARCH_UPDATE(){
 		echo ""
 		echo "Actualmente no hay ningún fichero de repositorio descargado..."
 		echo "Use [gc-ota --update] para descargarlo desde el servidor web e inténtelo de nuevo"
+		
+		#Si se llamó a la función con el argumento "APP" se dejará en el xml un registro de error y el motivo del fallo
+		if [ $1 == "APP" ]
+		then
+			echo "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>" > $PATH_XML
+			echo "<map>" >> $PATH_XML
+			echo '<boolean name="fallo" value="true" />' >> $PATH_XML
+			echo '<string name="motivo_fallo">Actualmente no hay ningún fichero de repositorio descargado...</string>' >> $PATH_XML
+			echo "</map>" >> $PATH_XML
+			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
+		fi
 		SALIR
+
 	fi
 
 }
@@ -267,16 +324,26 @@ function DOWNLOAD_UPDATEZIP(){
 	echo "Descargando el $UPDATEZIP desde el origen:"
 	echo "$LINK_UPDATE"
 	echo ""
-	echo "########################################"
 	wget $LINK_UPDATE -O $PATH_FILES_DOWNLOAD/$UPDATEZIP
-	echo "########################################"
 
 	if [ $? != 0 ]
 	then
 		echo ""
 		echo "Ocurrión un error al descargar el archivo..."
 		echo "Abortado"
+		
+		#Si se llamó a la función con el argumento "APP" se dejará en el xml un registro de error y el motivo del fallo
+		if [ $1 == "APP" ]
+		then
+			echo "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>" > $PATH_XML
+			echo "<map>" >> $PATH_XML
+			echo '<boolean name="fallo" value="true" />' >> $PATH_XML
+			echo '<string name="motivo_fallo">Ocurrión un error al descargar el archivo...</string>' >> $PATH_XML
+			echo "</map>" >> $PATH_XML
+			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
+		fi
 		SALIR
+
 	else
 		echo ""
 		echo "Archivo descargado con exito"
@@ -295,7 +362,19 @@ function PREPARE_REBOOT(){
 		echo ""
 		echo "La suma de verificación del archivo descargado no coincide con la que se esperaba"
 		echo "¿¿Archivo corrupto??"
+		
+		#Si se llamó a la función con el argumento "APP" se dejará en el xml un registro de error y el motivo del fallo
+		if [ $1 == "APP" ]
+		then
+			echo "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>" > $PATH_XML
+			echo "<map>" >> $PATH_XML
+			echo '<boolean name="fallo" value="true" />' >> $PATH_XML
+			echo '<string name="motivo_fallo">La suma de verificación del archivo descargado no coincide con la que se esperaba</string>' >> $PATH_XML
+			echo "</map>" >> $PATH_XML
+			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
+		fi
 		SALIR
+
 	else
 		echo ""
 		echo "Suma de verificación exitosa"
@@ -325,6 +404,8 @@ echo "Escribiendo el siguiente informe para que sea leido por la app..."
 	echo "##########################################################"
 echo "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>"
 echo '<map>
+<boolean name="fallo" value="false" />
+<string name="motivo_fallo">Sin fallos</string>
 <boolean name="preparado" value="true" />
 <string name="version_rom_actual">'$VERSION_GINGER'</string>
 <string name="update_ota">'$UPDATE_ON_REPO'</string>
@@ -337,6 +418,8 @@ echo '<map>
 
 echo "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>" > $PATH_XML
 echo '<map>
+<boolean name="fallo" value="false" />
+<string name="motivo_fallo">Sin fallos</string>
 <boolean name="preparado" value="true" />
 <string name="version_rom_actual">'$VERSION_GINGER'</string>
 <string name="update_ota">'$UPDATE_ON_REPO'</string>
@@ -362,6 +445,8 @@ function READY_XML(){
 
 echo "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>" > $PATH_XML
 echo '<map>
+<boolean name="fallo" value="false" />
+<string name="motivo_fallo">Sin fallos</string>
 <boolean name="preparado" value="true" />
 <boolean name="reiniciar" value="true" />
 <string name="version_rom_actual">'$VERSION_GINGER'</string>
@@ -417,11 +502,12 @@ case $1 in
 		then
 			sleep 2
 			VAR_CONTROL #Siempre comprobar que las variables se han podido leer con exito
-			DOWNLOAD_REPO
-			SEARCH_UPDATE			
-			DOWNLOAD_UPDATEZIP
-			PREPARE_REBOOT
-			READY_XML
+			CHECK_NET APP
+			DOWNLOAD_REPO APP
+			SEARCH_UPDATE APP		
+			DOWNLOAD_UPDATEZIP APP
+			PREPARE_REBOOT APP
+			READY_XML APP
 
 			# Comando para abrir el OtaInfo
 			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
@@ -429,9 +515,10 @@ case $1 in
 
 			#Descarga información del repositorio, comprueba versiones, crea el informe y lanza la app para instalar
 			VAR_CONTROL #Siempre comprobar que las variables se han podido leer con exito
-			DOWNLOAD_REPO
-			SEARCH_UPDATE
-			CHANGES_TO_XML
+			CHECK_NET APP
+			DOWNLOAD_REPO APP
+			SEARCH_UPDATE APP
+			CHANGES_TO_XML APP
 			# Comando para abrir el OtaInfo
 			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
 		fi
@@ -447,11 +534,13 @@ case $1 in
 
 	--update) #Actualiza el repositorio, muestra información, pero no actualiza el sistema
 		VAR_CONTROL #Siempre comprobar que las variables se han podido leer con exito
+		CHECK_NET
 		DOWNLOAD_REPO
 	;;
 	
 	--upgrade) # Actualiza el sistema con la versión superior encontrada
 		VAR_CONTROL #Siempre comprobar que las variables se han podido leer con exito
+		CHECK_NET
 		DOWNLOAD_REPO
 		SEARCH_UPDATE
 		DOWNLOAD_UPDATEZIP
