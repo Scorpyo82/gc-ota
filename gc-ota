@@ -67,10 +67,10 @@ LOG="/system/gc-ota_$VERSION.log"
 KEY_RECOVERY_OLD="/cache/recovery/load-recovery-old"
 
 # Ruta raiz para los trabajos de la aplicación
-PATH_HOME="/sdcard/GC-OTA/"
+PATH_HOME="/sdcard/GC-OTA"
 
 # Ruta donde se descargará la lista de actualizaciones
-PATH_REPO_DOWNLOAD="/sdcard/GC-OTA/repo/"
+PATH_REPO_DOWNLOAD="/sdcard/GC-OTA/repo"
 
 # Ruta donde se descargarán los achivos de actualizaciones
 PATH_FILES_DOWNLOAD="/sdcard/GC-OTA/files"
@@ -129,7 +129,7 @@ function VAR_CONTROL(){
 		then
 			echo "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>" > $PATH_XML
 			echo "<map>" >> $PATH_XML
-			echo '<boolean name="preparado" value="true" />' >> PATH_XML
+			echo '<boolean name="preparado" value="true" />' >> $PATH_XML
 			echo '<boolean name="fallo" value="true" />' >> $PATH_XML
 			echo '<string name="motivo_fallo">A su sistema le faltan variables importantes en build.prop</string>' >> $PATH_XML
 			echo "</map>" >> $PATH_XML
@@ -163,7 +163,7 @@ function CHECK_NET(){
 		then
 			echo "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>" > $PATH_XML
 			echo "<map>" >> $PATH_XML
-			echo '<boolean name="preparado" value="true" />' >> PATH_XML
+			echo '<boolean name="preparado" value="true" />' >> $PATH_XML
 			echo '<boolean name="fallo" value="true" />' >> $PATH_XML
 			echo '<string name="motivo_fallo">Problema con el acceso al servidor web</string>' >> $PATH_XML
 			echo "/<map>" >> $PATH_XML
@@ -230,7 +230,7 @@ function DOWNLOAD_REPO(){
 		then
 			echo "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>" > $PATH_XML
 			echo "<map>" >> $PATH_XML
-			echo '<boolean name="preparado" value="true" />' >> PATH_XML
+			echo '<boolean name="preparado" value="true" />' >> $PATH_XML
 			echo '<boolean name="fallo" value="true" />' >> $PATH_XML
 			echo '<string name="motivo_fallo">No ha sido posible descargar el repositorio</string>' >> $PATH_XML
 			echo "</map>" >> $PATH_XML
@@ -282,7 +282,7 @@ function SEARCH_UPDATE(){
 		then
 			echo "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>" > $PATH_XML
 			echo "<map>" >> $PATH_XML
-			echo '<boolean name="preparado" value="true" />' >> PATH_XML
+			echo '<boolean name="preparado" value="true" />' >> $PATH_XML
 			echo '<boolean name="fallo" value="true" />' >> $PATH_XML
 			echo '<string name="motivo_fallo">No se han encontrado actualizaciones, inténtelo más adelante</string>' >> $PATH_XML
 			echo "</map>" >> $PATH_XML
