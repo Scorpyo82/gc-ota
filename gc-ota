@@ -266,6 +266,7 @@ function SEARCH_UPDATE(){
 		# Buscaremos línea a línea
 		echo "" 
 		echo "Buscando actualizaciones..."
+		encontrada=false
 		while read line
 		do
 			# Si en esta línea se encuentra la misma versión en la columna 1 y una actualización un número mayor en la columna 2 entonces
@@ -283,22 +284,27 @@ function SEARCH_UPDATE(){
 				echo "Actualización nº $UPDATE_ON_REPO para la versión $VERSION_GINGER"
 				echo "Cambios:"
 				echo $CHANGES
+				encontrada=true
 				break
 			fi
-
-		echo ""
-		echo "No se han encontrado actualizaciones, inténtelo más adelante"
-		
-		#Si se llamó a la función con el argumento "APP" se dejará en el xml un registro de error y el motivo del fallo
-		if [ $1 == "APP" ]
-		then
-			REPORT_FAIL "No se han encontrado actualizaciones, inténtelo más adelante"
-			SET_PERMISOS_XML
-			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
-		fi
-		SALIR
-
 		done < $PATH_REPO_DOWNLOAD/updates_temp
+
+		if [ $encontrada == false ]
+		then
+		
+			echo ""
+			echo "No se han encontrado actualizaciones, inténtelo más adelante"
+			
+			#Si se llamó a la función con el argumento "APP" se dejará en el xml un registro de error y el motivo del fallo
+			if [ $1 == "APP" ]
+			then
+				REPORT_FAIL "No se han encontrado actualizaciones, inténtelo más adelante"
+				SET_PERMISOS_XML
+				am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
+			fi
+			SALIR
+		fi
+
 
 	else
 		echo ""
