@@ -412,8 +412,8 @@ echo '<map>
 <boolean name="fallo" value="false" />
 <string name="motivo_fallo">Sin fallos</string>
 <boolean name="preparado" value="true" />
-<string name="version_rom_actual">'$VERSION_GINGER'</string>
-<string name="update_ota">'$UPDATE_ON_REPO'</string>
+<string name="version_rom_actual">Versión '$VERSION_GINGER'</string>
+<string name="update_ota">Revisión '$UPDATE_ON_REPO'</string>
 <string name="ota_changes">'$CHANGES'</string>
 <string name="update_package">'$UPDATEZIP'</string>
 </map>
@@ -426,8 +426,8 @@ echo '<map>
 <boolean name="fallo" value="false" />
 <string name="motivo_fallo">Sin fallos</string>
 <boolean name="preparado" value="true" />
-<string name="version_rom_actual">'$VERSION_GINGER'</string>
-<string name="update_ota">'$UPDATE_ON_REPO'</string>
+<string name="version_rom_actual">Versión '$VERSION_GINGER'</string>
+<string name="update_ota">Revisión '$UPDATE_ON_REPO'</string>
 <string name="ota_changes">'$CHANGES'</string>
 <string name="update_package">'$UPDATEZIP'</string>
 </map>
