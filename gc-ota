@@ -116,6 +116,18 @@ function CHECK_RUN(){
 
 }
 
+function REPORT_FAIL(){
+## Escribe el xml con el fallo descrito en el argumento "$1"
+
+	echo "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>" > $PATH_XML
+	echo "<map>" >> $PATH_XML
+	echo '<boolean name="preparado" value="true" />' >> $PATH_XML
+	echo '<boolean name="fallo" value="true" />' >> $PATH_XML
+	echo '<string name="motivo_fallo">'$1'</string>' >> $PATH_XML
+	echo "</map>" >> $PATH_XML
+
+}
+
 function VAR_CONTROL(){
 ## Función para controlar que no haya ni una sola variable vacía de las importantes
 
@@ -127,14 +139,9 @@ function VAR_CONTROL(){
 		#Si se llamó a la función con el argumento "APP" se dejará en el xml un registro de error y el motivo del fallo
 		if [ $1 == "APP" ]
 		then
-			echo "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>" > $PATH_XML
-			echo "<map>" >> $PATH_XML
-			echo '<boolean name="preparado" value="true" />' >> $PATH_XML
-			echo '<boolean name="fallo" value="true" />' >> $PATH_XML
-			echo '<string name="motivo_fallo">A su sistema le faltan variables importantes en build.prop</string>' >> $PATH_XML
-			echo "</map>" >> $PATH_XML
-			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
+			REPORT_FAIL "Alguna de las variables en /system/build.prop no están definidas adecuadamente."
 			SET_PERMISOS_XML
+			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
 		fi
 		SALIR
 	else
@@ -174,14 +181,9 @@ function CHECK_NET(){
 		#Si se llamó a la función con el argumento "APP" se dejará en el xml un registro de error y el motivo del fallo
 		if [ $1 == "APP" ]
 		then
-			echo "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>" > $PATH_XML
-			echo "<map>" >> $PATH_XML
-			echo '<boolean name="preparado" value="true" />' >> $PATH_XML
-			echo '<boolean name="fallo" value="true" />' >> $PATH_XML
-			echo '<string name="motivo_fallo">Problema con el acceso al servidor web</string>' >> $PATH_XML
-			echo "/<map>" >> $PATH_XML
-			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
+			REPORT_FAIL "Problema con el acceso al servidor web"
 			SET_PERMISOS_XML
+			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
 		fi
 		SALIR
 
@@ -242,14 +244,9 @@ function DOWNLOAD_REPO(){
 		#Si se llamó a la función con el argumento "APP" se dejará en el xml un registro de error y el motivo del fallo
 		if [ $1 == "APP" ]
 		then
-			echo "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>" > $PATH_XML
-			echo "<map>" >> $PATH_XML
-			echo '<boolean name="preparado" value="true" />' >> $PATH_XML
-			echo '<boolean name="fallo" value="true" />' >> $PATH_XML
-			echo '<string name="motivo_fallo">No ha sido posible descargar el repositorio</string>' >> $PATH_XML
-			echo "</map>" >> $PATH_XML
-			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
+			REPORT_FAIL "No ha sido posible descargar el repositorio"
 			SET_PERMISOS_XML
+			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
 		fi
 		SALIR
 
@@ -295,14 +292,9 @@ function SEARCH_UPDATE(){
 		#Si se llamó a la función con el argumento "APP" se dejará en el xml un registro de error y el motivo del fallo
 		if [ $1 == "APP" ]
 		then
-			echo "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>" > $PATH_XML
-			echo "<map>" >> $PATH_XML
-			echo '<boolean name="preparado" value="true" />' >> $PATH_XML
-			echo '<boolean name="fallo" value="true" />' >> $PATH_XML
-			echo '<string name="motivo_fallo">No se han encontrado actualizaciones, inténtelo más adelante</string>' >> $PATH_XML
-			echo "</map>" >> $PATH_XML
-			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
+			REPORT_FAIL "No se han encontrado actualizaciones, inténtelo más adelante"
 			SET_PERMISOS_XML
+			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
 		fi
 		SALIR
 
@@ -316,13 +308,9 @@ function SEARCH_UPDATE(){
 		#Si se llamó a la función con el argumento "APP" se dejará en el xml un registro de error y el motivo del fallo
 		if [ $1 == "APP" ]
 		then
-			echo "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>" > $PATH_XML
-			echo "<map>" >> $PATH_XML
-			echo '<boolean name="fallo" value="true" />' >> $PATH_XML
-			echo '<string name="motivo_fallo">Actualmente no hay ningún fichero de repositorio descargado...</string>' >> $PATH_XML
-			echo "</map>" >> $PATH_XML
-			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
+			REPORT_FAIL "Actualmente no hay ningún fichero de repositorio descargado..."
 			SET_PERMISOS_XML
+			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
 		fi
 		SALIR
 
@@ -352,13 +340,9 @@ function DOWNLOAD_UPDATEZIP(){
 		#Si se llamó a la función con el argumento "APP" se dejará en el xml un registro de error y el motivo del fallo
 		if [ $1 == "APP" ]
 		then
-			echo "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>" > $PATH_XML
-			echo "<map>" >> $PATH_XML
-			echo '<boolean name="fallo" value="true" />' >> $PATH_XML
-			echo '<string name="motivo_fallo">Ocurrión un error al descargar el archivo...</string>' >> $PATH_XML
-			echo "</map>" >> $PATH_XML
-			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
+			REPORT_FAIL "Ocurrión un error al descargar el archivo..."
 			SET_PERMISOS_XML
+			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
 		fi
 		SALIR
 
@@ -384,13 +368,9 @@ function PREPARE_REBOOT(){
 		#Si se llamó a la función con el argumento "APP" se dejará en el xml un registro de error y el motivo del fallo
 		if [ $1 == "APP" ]
 		then
-			echo "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>" > $PATH_XML
-			echo "<map>" >> $PATH_XML
-			echo '<boolean name="fallo" value="true" />' >> $PATH_XML
-			echo '<string name="motivo_fallo">La suma de verificación del archivo descargado no coincide con la que se esperaba</string>' >> $PATH_XML
-			echo "</map>" >> $PATH_XML
-			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
+			REPORT_FAIL "La suma de verificación del archivo descargado no coincide con la que se esperaba"
 			SET_PERMISOS_XML
+			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
 		fi
 		SALIR
 
