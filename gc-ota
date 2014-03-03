@@ -294,6 +294,7 @@ function SEARCH_UPDATE(){
 		
 			echo ""
 			echo "No se han encontrado actualizaciones, inténtelo más adelante"
+
 			
 			#Si se llamó a la función con el argumento "APP" se dejará en el xml un registro de error y el motivo del fallo
 			if [ $1 == "APP" ]
@@ -321,6 +322,8 @@ function SEARCH_UPDATE(){
 		SALIR
 
 	fi
+	
+	return 0
 
 }
 
@@ -359,8 +362,8 @@ function DOWNLOAD_UPDATEZIP(){
 
 }
 
-function PREPARE_REBOOT(){
-## Función que prepara todo lo necesario para actualizar el sistema con el nuevo update.zip
+function CHECK_MD5(){
+## Función que comprueba el md5 del update.zip y si es incorrecto lo borra para evitar problemas.
 
 	
 	#Obteniendo y comparando md5
@@ -374,6 +377,8 @@ function PREPARE_REBOOT(){
 		#Si se llamó a la función con el argumento "APP" se dejará en el xml un registro de error y el motivo del fallo
 		if [ $1 == "APP" ]
 		then
+			# Eliminamos el update zip y reportamos el fallo.
+			rm -f $PATH_FILES_DOWNLOAD/$UPDATEZIP 
 			REPORT_FAIL "La suma de verificación del archivo descargado no coincide con la que se esperaba"
 			SET_PERMISOS_XML
 			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
@@ -384,6 +389,12 @@ function PREPARE_REBOOT(){
 		echo ""
 		echo "Suma de verificación exitosa"
 	fi
+}
+
+function PREPARE_REBOOT(){
+## Función que prepara todo lo necesario para actualizar el sistema con el nuevo update.zip
+
+	echo ""
 	
 	#Escribiendo archivo command con las ordenes de instalación:
 	echo "--update_package="$PATH_FILES_DOWNLOAD/$UPDATEZIP > /cache/recovery/command
@@ -469,13 +480,19 @@ function HELP(){
 	echo '
     Modo de empleo: gc-ota [Opción]
 
-    --app              Ejecuta los trabajos por defecto para usar la app "Ajustes Especiales GC".
-    --app upgrade      Actualiza el sistema con la versión superior que esté disponible y lo muestra en la app
     --check            Busca y muestra la información usando el último repo descargado
     --update           Actualiza el repositorio, muestra información, pero no actualiza el sistema
     --upgrade          Actualiza el sistema con la versión superior que esté disponible en el servidor
     --version          Muestra la versión de gc-settings
     --help             Muestra esta ayuda
+
+    --app [Opción]     Con esta opción se pretende interactuar usando el programa "Ajustes especiales GC"
+
+    Lista de opciones para --app:
+
+          update       Actualiza los repositorios y busca actualizacioens para luego mostrar el resultado en la app
+          upgrade      Actualiza el sistema con la versión superior que esté disponible y lo muestra en la app
+          discreet     Busca actualizaciones de forma discreta y solo lanza la APP si encuentra alguna actualización (no muestra errores)
 
     Desarrollado por <Miguel Ponce Torres> bajo GNU GPL <http://www.gnu.org/licenses/>
     MAIL: miguelponcetorres@gmail.com
@@ -493,30 +510,59 @@ case $1 in
 
 	--app)
 
-		if [ "$2" == "upgrade" ]
-		then
-			sleep 2
-			VAR_CONTROL #Siempre comprobar que las variables se han podido leer con exito
-			CHECK_NET APP
-			DOWNLOAD_REPO APP
-			SEARCH_UPDATE APP		
-			DOWNLOAD_UPDATEZIP APP
-			PREPARE_REBOOT APP
-			READY_XML APP
+		case $2 in
 
-			# Comando para abrir el OtaInfo
-			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
-		else
+			update)
 
-			#Descarga información del repositorio, comprueba versiones, crea el informe y lanza la app para instalar
-			VAR_CONTROL #Siempre comprobar que las variables se han podido leer con exito
-			CHECK_NET APP
-			DOWNLOAD_REPO APP
-			SEARCH_UPDATE APP
-			CHANGES_TO_XML APP
-			# Comando para abrir el OtaInfo
-			am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
-		fi
+				#Descarga información del repositorio, comprueba versiones, crea el informe y lanza la app para instalar
+				VAR_CONTROL #Siempre comprobar que las variables se han podido leer con exito
+				CHECK_NET APP
+				DOWNLOAD_REPO APP
+				SEARCH_UPDATE APP
+				CHANGES_TO_XML APP
+				# Comando para abrir el OtaInfo
+				am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
+			;;
+
+			upgrade)
+
+				sleep 2
+				VAR_CONTROL #Siempre comprobar que las variables se han podido leer con exito
+				CHECK_NET APP
+				DOWNLOAD_REPO APP
+				SEARCH_UPDATE APP		
+				DOWNLOAD_UPDATEZIP APP
+				CHECK_MD5 APP
+				PREPARE_REBOOT
+				READY_XML APP
+
+				# Comando para abrir el OtaInfo
+				am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
+			;;
+
+			discreet)
+				#Descarga información del repositorio, comprueba versiones, crea el informe en modo sigiloso si y 
+				#lanza la app para instalar si encuentra actualizaciones
+				VAR_CONTROL #Siempre comprobar que las variables se han podido leer con exito
+				CHECK_NET
+				DOWNLOAD_REPO
+				SEARCH_UPDATE
+				if [ $? == "0" ]
+				then
+					CHANGES_TO_XML APP
+					# Comando para abrir el OtaInfo
+					am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
+				fi
+			;;
+
+			*)
+				echo "No ha introducido ninguna opción para --app"
+				sleep 2
+				echo
+				HELP
+			;;
+
+		esac
 	;;
 
 	--check) #Busca información en el último repo descargado
@@ -539,6 +585,7 @@ case $1 in
 		DOWNLOAD_REPO
 		SEARCH_UPDATE
 		DOWNLOAD_UPDATEZIP
+		CHECK_MD5
 		PREPARE_REBOOT
 	;;
 
