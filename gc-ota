@@ -193,35 +193,41 @@ function CHECK_NET(){
 function CHECK_PATH_SD(){
 ## Función que comprueba si existe la extructura adecuada dentro de la SD para copiar los archivos.
 	
-	if [ ! -e $PATH_HOME ] || [ ! -e $PATH_FILES_DOWNLOAD ] || [ ! -e $PATH_REPO_DOWNLOAD ]
-	then
-		echo ""
-		echo "Creando direcotrios necesarios en tarjeta SD..."
-		mkdir -p $PATH_HOME $PATH_REPO_DOWNLOAD $PATH_FILES_DOWNLOAD
-		
-		#Comprobamos si las carpetas han sido creadas o a habido un problema
-		if [ $? == "0" ] then
+
+	for i in $PATH_HOME $PATH_FILES_DOWNLOAD $PATH_REPO_DOWNLOAD
+	do
+
+		if [ ! -e $i ]
+		then
 			echo ""
-			echo "Directorios creados."
+			echo "Creando el direcotrio $i en la tarjeta SD..."
+			mkdir $i
+			
+			#Comprobamos si la operación se realizó con exito o ha habido algún problema
+			if [ "$?" == "0" ]
+			then
+				echo ""
+				echo "Directorios creado."
+			else
+				echo ""
+				echo "Se ha encontrado un problema a la hora de crear los archivos en la SD"
+	
+				#Si se llamó a la función con el argumento "APP" se dejará en el xml un registro de error y el motivo del fallo
+				if [ "$1" == "APP" ]
+				then
+					REPORT_FAIL "Problema al crear carpetas de trabajo en la SD"
+					SET_PERMISOS_XML
+					am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
+				fi
+				SALIR
+	
+			fi
+	
 		else
 			echo ""
-			echo "Se ha encontrado un problema a la hora de crear los archivos en la SD"
-
-			#Si se llamó a la función con el argumento "APP" se dejará en el xml un registro de error y el motivo del fallo
-			if [ "$1" == "APP" ]
-			then
-				REPORT_FAIL "Problema al crear carpetas de trabajo en la SD"
-				SET_PERMISOS_XML
-				am start -a android.intent.action.MAIN -n es.pccitos.gcsettings/.OtaInfo
-			fi
-			SALIR
-
+			echo "Directorio $i detectado en la SD, omitiendo su creación..."
 		fi
-
-	else
-		echo ""
-		echo "Directorios en tarjeta SD detectados."
-	fi
+	done
 }
 
 function CHECK_PATH_XML(){
