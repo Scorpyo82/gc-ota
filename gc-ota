@@ -46,7 +46,7 @@
 #VARIABLES
 
 # Esta variable define la versión del Script actual:
-VERSION="1.0"
+VERSION="1.1"
 
 # Variable que define el archivo en el que se debe de escribir los datos recogidos del repositorio.
 PATH_XML="/data/data/es.pccitos.gcsettings/shared_prefs/OtaInfo.xml"
@@ -248,7 +248,12 @@ function CHECK_PATH_XML(){
 
 function DOWNLOAD_REPO(){
 ## Función que actualiza el archivo de repositorio con las actualizaciones publicadas en el server
-	CHECK_PATH_SD
+	if [ "$1" == "APP" ]
+	then
+		CHECK_PATH_SD APP
+	else
+		CHECK_PATH_SD
+	fi
 
 	if [ -e "$PATH_REPO_DOWNLOAD/updates" ]
 	then
